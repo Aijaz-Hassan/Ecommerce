@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../api/client";
+import { formatCurrency } from "../utils/currency";
 
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -116,7 +117,7 @@ export default function MyOrdersPage() {
                   </div>
                   <div className="history-order-actions">
                     <span className="status-badge">{order.status}</span>
-                    <strong>${Number(order.totalAmount).toFixed(2)}</strong>
+                    <strong>{formatCurrency(order.totalAmount)}</strong>
                     <Link className="solid-link" to={`/orders/${order.id}`}>
                       View
                     </Link>
@@ -157,7 +158,7 @@ export default function MyOrdersPage() {
                       <span>Items</span>
                     </div>
                     <div>
-                      <strong>${Number(order.totalAmount).toFixed(2)}</strong>
+                      <strong>{formatCurrency(order.totalAmount)}</strong>
                       <span>Total</span>
                     </div>
                     <div>

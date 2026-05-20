@@ -4,6 +4,7 @@ import api from "../api/client";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { fallbackProducts } from "../data/fallbackProducts";
+import { formatCurrency } from "../utils/currency";
 import { isAdminRole } from "../utils/roles";
 
 export default function ProductDetailsPage() {
@@ -93,7 +94,7 @@ export default function ProductDetailsPage() {
             <strong>4.4</strong>
             <span>Trusted by frequent shoppers for everyday use and quality finish.</span>
           </div>
-          <strong className="product-page-price">${Number(product.price).toFixed(2)}</strong>
+          <strong className="product-page-price">{formatCurrency(product.price)}</strong>
           <p className="section-note">
             Inclusive of premium finish, careful packaging, and responsive customer support.
           </p>
@@ -110,7 +111,7 @@ export default function ProductDetailsPage() {
         </div>
 
         <aside className="buy-box-panel">
-          <strong className="buy-box-price">${Number(product.price).toFixed(2)}</strong>
+          <strong className="buy-box-price">{formatCurrency(product.price)}</strong>
           <p className="buy-box-note">Fast local dispatch. Secure packaging. Smooth returns support.</p>
           <div className="buy-box-stock">
             <span>{product.stock > 0 ? "In Stock" : "Out of Stock"}</span>

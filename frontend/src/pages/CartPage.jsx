@@ -3,6 +3,7 @@ import { Heart, PackageOpen, ShoppingBag, Tag, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api/client";
 import { useCart } from "../context/CartContext";
+import { formatCurrency } from "../utils/currency";
 
 const addressStorageKey = "store-checkout-address";
 const savedLaterKey = "lumenlane_saved_later";
@@ -206,7 +207,7 @@ export default function CartPage() {
 
         razorpay.open();
       } else {
-        const accepted = window.confirm(`Demo payment for INR ${(data.amount / 100).toFixed(2)}. Click OK to simulate a successful payment.`);
+        const accepted = window.confirm(`Demo payment for ${formatCurrency(data.amount / 100)}. Click OK to simulate a successful payment.`);
 
         if (!accepted) {
           showToast("Demo payment cancelled.", "error");
@@ -264,7 +265,7 @@ export default function CartPage() {
                 <article key={item.cartItemId}>
                   <img src={item.imageUrl} alt={item.name} />
                   <strong>{item.name}</strong>
-                  <span>${Number(item.price).toFixed(2)}</span>
+                  <span>{formatCurrency(item.price)}</span>
                 </article>
               ))}
             </div>
@@ -314,13 +315,13 @@ export default function CartPage() {
                   </div>
                 </div>
                 <div className="cart-quantity-panel">
-                  <strong>${Number(item.price).toFixed(2)}</strong>
+                  <strong>{formatCurrency(item.price)}</strong>
                   <div className="quantity-selector">
                     <button type="button" onClick={() => runCartAction(item.cartItemId, () => decreaseQuantity(item.cartItemId), "Quantity updated.")} disabled={busyItemId === item.cartItemId}>-</button>
                     <span>{item.quantity}</span>
                     <button type="button" onClick={() => runCartAction(item.cartItemId, () => increaseQuantity(item.cartItemId), "Quantity updated.")} disabled={busyItemId === item.cartItemId}>+</button>
                   </div>
-                  <em>${itemTotal.toFixed(2)}</em>
+                  <em>{formatCurrency(itemTotal)}</em>
                 </div>
               </article>
             );
@@ -334,7 +335,7 @@ export default function CartPage() {
                   <article key={item.cartItemId}>
                     <img src={item.imageUrl} alt={item.name} />
                     <strong>{item.name}</strong>
-                    <span>${Number(item.price).toFixed(2)}</span>
+                    <span>{formatCurrency(item.price)}</span>
                   </article>
                 ))}
               </div>
@@ -355,23 +356,23 @@ export default function CartPage() {
             </div>
             <div className="summary-line">
               <span>Subtotal</span>
-              <strong>${subtotal.toFixed(2)}</strong>
+              <strong>{formatCurrency(subtotal)}</strong>
             </div>
             <div className="summary-line">
               <span>Discount</span>
-              <strong>-${discount.toFixed(2)}</strong>
+              <strong>-{formatCurrency(discount)}</strong>
             </div>
             <div className="summary-line">
               <span>Shipping</span>
-              <strong>${shippingAmount.toFixed(2)}</strong>
+              <strong>{formatCurrency(shippingAmount)}</strong>
             </div>
             <div className="summary-line">
               <span>Tax</span>
-              <strong>${taxAmount.toFixed(2)}</strong>
+              <strong>{formatCurrency(taxAmount)}</strong>
             </div>
             <div className="summary-line final-total">
               <span>Final total</span>
-              <strong>${grandTotal.toFixed(2)}</strong>
+              <strong>{formatCurrency(grandTotal)}</strong>
             </div>
             <button className="solid-button checkout-button" type="button" disabled={buying} onClick={handleBuyNow}>
               {buying ? "Starting checkout..." : "Proceed to Checkout"}
@@ -422,7 +423,7 @@ export default function CartPage() {
       </section>
 
       <div className="mobile-checkout-bar">
-        <strong>${grandTotal.toFixed(2)}</strong>
+        <strong>{formatCurrency(grandTotal)}</strong>
         <button type="button" disabled={buying} onClick={handleBuyNow}>Checkout</button>
       </div>
     </main>

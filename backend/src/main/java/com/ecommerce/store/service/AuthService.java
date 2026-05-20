@@ -24,6 +24,7 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -43,7 +44,7 @@ public class AuthService {
     private final OrderRepository orderRepository;
     private final PurchaseRepository purchaseRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final EmailService emailService;
+    private final PasswordResetEmailSender emailService;
     private final SecureRandom secureRandom = new SecureRandom();
     private final Map<String, LocalDateTime> resetRequestTracker = new ConcurrentHashMap<>();
     private final String frontendUrl;
@@ -59,7 +60,7 @@ public class AuthService {
         OrderRepository orderRepository,
         PurchaseRepository purchaseRepository,
         PasswordResetTokenRepository passwordResetTokenRepository,
-        EmailService emailService,
+        PasswordResetEmailSender emailService,
         @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl,
         @Value("${app.password-reset.expiration-minutes:15}") int resetExpirationMinutes,
         @Value("${app.password-reset.rate-limit-minutes:2}") int resetRateLimitMinutes
@@ -79,14 +80,15 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        String email = clean(request.getEmail()).toLowerCase();
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new BadRequestException("An account with this email already exists");
         }
 
         User user = new User();
         user.setFullName(request.getFullName());
-        user.setName(request.getEmail());
-        user.setEmail(request.getEmail());
+        user.setName(email);
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         boolean adminExists = userRepository.existsByRoleIn(List.of("ROLE_ADMIN", "ADMIN", "role_admin", "admin"));
         user.setRole(adminExists ? "ROLE_CUSTOMER" : "ROLE_ADMIN");
@@ -103,11 +105,12 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        String email = clean(request.getEmail()).toLowerCase();
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            new UsernamePasswordAuthenticationToken(email, request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailIgnoreCase(email)
             .orElseThrow(() -> new BadRequestException("User not found"));
 
         String token = jwtService.generateToken(
@@ -195,19 +198,23 @@ public class AuthService {
         if (allowedAt != null && now.isBefore(allowedAt)) {
             return;
         }
-        resetRequestTracker.put(email, now.plusMinutes(resetRateLimitMinutes));
 
-        userRepository.findByEmail(email).ifPresent((user) -> {
-            passwordResetTokenRepository.markActiveTokensUsedForUser(user);
-            String rawToken = generateRawToken();
-            PasswordResetToken token = new PasswordResetToken();
-            token.setUser(user);
-            token.setTokenHash(hashToken(rawToken));
-            token.setExpiresAt(now.plusMinutes(resetExpirationMinutes));
-            passwordResetTokenRepository.save(token);
-            String resetUrl = frontendUrl + "/reset-password?token=" + rawToken;
-            emailService.sendPasswordResetEmail(user, resetUrl, resetExpirationMinutes);
-        });
+        Optional<User> resetUser = userRepository.findByEmailIgnoreCase(email);
+        if (resetUser.isEmpty()) {
+            throw new BadRequestException("Unable to send reset email. Please try again later.");
+        }
+
+        User user = resetUser.get();
+        passwordResetTokenRepository.markActiveTokensUsedForUser(user);
+        String rawToken = generateRawToken();
+        PasswordResetToken token = new PasswordResetToken();
+        token.setUser(user);
+        token.setTokenHash(hashToken(rawToken));
+        token.setExpiresAt(now.plusMinutes(resetExpirationMinutes));
+        passwordResetTokenRepository.save(token);
+        String resetUrl = frontendUrl + "/reset-password?token=" + rawToken;
+        emailService.sendPasswordResetEmail(user, resetUrl, resetExpirationMinutes);
+        resetRequestTracker.put(email, now.plusMinutes(resetRateLimitMinutes));
     }
 
     @Transactional(readOnly = true)

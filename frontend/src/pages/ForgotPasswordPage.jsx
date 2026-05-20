@@ -27,15 +27,16 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     try {
       const payload = { email: email.trim() };
+      let response;
       if (resend) {
-        await resendPasswordReset(payload);
+        response = await resendPasswordReset(payload);
       } else {
-        await requestPasswordReset(payload);
+        response = await requestPasswordReset(payload);
       }
       setSent(true);
-      showToast("If an account exists, a reset link has been sent.");
+      showToast(response?.message || "A password reset link has been sent to your email.");
     } catch (error) {
-      showToast(error.response?.data?.message || "Unable to send reset link.", "error");
+      showToast(error.response?.data?.message || "Unable to send reset email. Please try again later.", "error");
     } finally {
       setLoading(false);
     }
@@ -71,7 +72,7 @@ export default function ForgotPasswordPage() {
         {sent && (
           <div className="success-panel">
             <strong>Check your inbox</strong>
-            <p>For security, we show the same message even if the email is not registered.</p>
+            <p>The link expires soon. Check your inbox and spam folder before requesting another link.</p>
             <button className="ghost-button" type="button" disabled={loading} onClick={(event) => submitRequest(event, true)}>
               Resend reset link
             </button>

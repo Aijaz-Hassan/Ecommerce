@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useProducts } from "../hooks/useProducts";
+import { formatCurrency } from "../utils/currency";
 import { isAdminRole } from "../utils/roles";
 
 const brandByCategory = {
@@ -243,7 +244,7 @@ export default function ProductsPage() {
           <div className="filter-group">
             <span>Price range</span>
             <input type="range" min="0" max={highestPrice} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
-            <strong>Up to ${maxPrice}</strong>
+            <strong>Up to {formatCurrency(maxPrice)}</strong>
           </div>
 
           <div className="filter-group">
@@ -328,16 +329,18 @@ export default function ProductsPage() {
                       <span>{product.rating} ({product.reviews})</span>
                     </div>
                     <div className="price-row">
-                      <strong>${Number(product.price).toFixed(2)}</strong>
-                      <del>${product.originalPrice.toFixed(2)}</del>
+                      <strong>{formatCurrency(product.price)}</strong>
+                      <del>{formatCurrency(product.originalPrice)}</del>
                       <em>{product.discount}% off</em>
                     </div>
                     <p className={product.stock > 0 ? "stock-text" : "stock-text out"}>{product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}</p>
                     <div className="premium-card-actions">
-                      <button className="solid-button" type="button" disabled={product.stock <= 0} onClick={() => handleAddToCart(product)}>
-                        <ShoppingBag size={17} />
-                        Add to Cart
-                      </button>
+                      {!isAdmin && (
+                        <button className="solid-button" type="button" disabled={product.stock <= 0} onClick={() => handleAddToCart(product)}>
+                          <ShoppingBag size={17} />
+                          Add to Cart
+                        </button>
+                      )}
                       <button className="ghost-button" type="button" onClick={() => openDetails(product)}>Details</button>
                     </div>
                   </div>
@@ -385,8 +388,8 @@ export default function ProductsPage() {
                 <span>{activeProduct.rating} rating with {activeProduct.reviews} reviews</span>
               </div>
               <div className="price-row detail-price-row">
-                <strong>${Number(activeProduct.price).toFixed(2)}</strong>
-                <del>${activeProduct.originalPrice.toFixed(2)}</del>
+                <strong>{formatCurrency(activeProduct.price)}</strong>
+                <del>{formatCurrency(activeProduct.originalPrice)}</del>
                 <em>{activeProduct.discount}% off</em>
               </div>
               <div className="detail-options">
@@ -414,8 +417,12 @@ export default function ProductsPage() {
                 <button type="button" onClick={() => setQuantity((current) => current + 1)}>+</button>
               </div>
               <div className="sticky-mobile-product-actions">
-                <button className="solid-button" type="button" onClick={() => handleAddToCart(activeProduct)}>Add to Cart</button>
-                <Link className="ghost-button" to="/cart">Buy Now</Link>
+                {!isAdmin && (
+                  <>
+                    <button className="solid-button" type="button" onClick={() => handleAddToCart(activeProduct)}>Add to Cart</button>
+                    <Link className="ghost-button" to="/cart">Buy Now</Link>
+                  </>
+                )}
                 <button className="ghost-button icon-text-button" type="button" onClick={() => toggleWishlist(activeProduct.id)}>
                   <Heart size={18} fill={wishlist.includes(activeProduct.id) ? "currentColor" : "none"} />
                   Wishlist

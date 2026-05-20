@@ -2,6 +2,7 @@ import { ImagePlus, Plus, RotateCcw, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/client";
 import AdminWorkspace from "../components/AdminWorkspace";
+import { formatCurrency } from "../utils/currency";
 
 const initialForm = {
   id: null,
@@ -235,7 +236,7 @@ export default function AdminProductsPage() {
                   <div>
                     <strong>{product.name}</strong>
                     <p>{product.category}</p>
-                    <p>SKU: LL-{product.id} | Price: ${Number(product.price).toFixed(2)}</p>
+                    <p>SKU: LL-{product.id} | Price: {formatCurrency(product.price)}</p>
                   </div>
                   <span className={Number(product.stock || 0) <= 5 ? "stock-danger" : "stock-ok"}>{product.stock} in stock</span>
                   <div className="admin-row-actions">

@@ -25,6 +25,22 @@ This workspace contains a full-stack ecommerce project built with:
 - Add Product API
 - Get All Products API
 
+## Password reset email
+
+The forgot-password flow sends real email through SMTP. Before starting the backend, configure these environment variables:
+
+```powershell
+$env:MAIL_USERNAME="your-email@gmail.com"
+$env:MAIL_PASSWORD="your-gmail-app-password"
+$env:MAIL_FROM="your-email@gmail.com"
+$env:SUPPORT_EMAIL="your-email@gmail.com"
+$env:MAIL_SENDER_NAME="Lumen Lane Support"
+```
+
+For Gmail, `MAIL_PASSWORD` must be a Gmail App Password, not your normal Gmail password. After setting these values, restart Spring Boot. The backend startup log should say password reset email is configured with the SMTP host, sender, and support address. If it says email is not configured, the reset endpoint will return `Unable to send reset email. Please try again later.`
+
+The email account you use for `MAIL_USERNAME` should be the real support mailbox for the site, for example `support@yourdomain.com` if you have domain email. If you use Gmail for local testing, use that Gmail address for `MAIL_FROM` and `SUPPORT_EMAIL`.
+
 ## Project structure
 
 - `backend` - Spring Boot API

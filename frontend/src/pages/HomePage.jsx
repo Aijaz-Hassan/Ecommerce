@@ -5,6 +5,7 @@ import ProductQuickViewModal from "../components/ProductQuickViewModal";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useProducts } from "../hooks/useProducts";
+import { formatCurrency } from "../utils/currency";
 import { isAdminRole } from "../utils/roles";
 
 const categoryCards = [
@@ -149,10 +150,12 @@ export default function HomePage() {
             <span>4.8</span>
           </div>
           <div className="home-product-footer">
-            <strong>${Number(product.price).toFixed(2)}</strong>
-            <button className="icon-button" type="button" onClick={() => handleAddToCart(product)} aria-label="Add to cart">
-              <ShoppingBag size={18} />
-            </button>
+            <strong>{formatCurrency(product.price)}</strong>
+            {!isAdmin && (
+              <button className="icon-button" type="button" onClick={() => handleAddToCart(product)} aria-label="Add to cart">
+                <ShoppingBag size={18} />
+              </button>
+            )}
           </div>
         </div>
       </article>
@@ -314,16 +317,18 @@ export default function HomePage() {
         </form>
       </section>
 
-      <aside className="sticky-cart-sidebar">
-        <div>
-          <ShoppingBag size={20} />
-          <span>{cartItems.length} items</span>
-        </div>
-        <strong>${cartTotal.toFixed(2)}</strong>
-        <button type="button" onClick={() => navigate("/cart")}>
-          Open Cart
-        </button>
-      </aside>
+      {!isAdmin && (
+        <aside className="sticky-cart-sidebar">
+          <div>
+            <ShoppingBag size={20} />
+            <span>{cartItems.length} items</span>
+          </div>
+          <strong>{formatCurrency(cartTotal)}</strong>
+          <button type="button" onClick={() => navigate("/cart")}>
+            Open Cart
+          </button>
+        </aside>
+      )}
 
       <footer className="commerce-footer">
         <div>
@@ -368,6 +373,7 @@ export default function HomePage() {
         open={Boolean(quickViewProduct)}
         product={quickViewProduct}
         wished={quickViewProduct ? wishlist.includes(quickViewProduct.id) : false}
+        showAddToCart={!isAdmin}
         onClose={() => setQuickViewProduct(null)}
         onWishlist={toggleWishlist}
         onAddToCart={handleAddToCart}

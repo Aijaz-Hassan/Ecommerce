@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../api/client";
+import { formatCurrency } from "../utils/currency";
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
@@ -67,7 +68,7 @@ export default function OrderHistoryPage() {
                   <span>Items</span>
                 </div>
                 <div>
-                  <strong>${Number(order.totalAmount).toFixed(2)}</strong>
+                  <strong>{formatCurrency(order.totalAmount)}</strong>
                   <span>Total</span>
                 </div>
                 <div>

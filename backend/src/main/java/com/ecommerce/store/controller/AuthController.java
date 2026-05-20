@@ -47,15 +47,15 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    public Map<String, String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.requestPasswordReset(request);
+        return Map.of("message", "A password reset link has been sent to your email.");
     }
 
     @PostMapping("/forgot-password/resend")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void resendForgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    public Map<String, String> resendForgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.resendPasswordReset(request);
+        return Map.of("message", "A password reset link has been sent to your email.");
     }
 
     @GetMapping("/reset-password/validate")

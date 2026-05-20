@@ -2,6 +2,7 @@ import { CreditCard, PackageCheck, RotateCcw, Search, Truck } from "lucide-react
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/client";
 import AdminWorkspace from "../components/AdminWorkspace";
+import { formatCurrency } from "../utils/currency";
 
 const orderStatuses = ["CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
 
@@ -211,7 +212,7 @@ export default function AdminOrdersPage() {
                 </div>
                 <div className="admin-order-block">
                   <strong>Total</strong>
-                  <p>${Number(order.totalAmount).toFixed(2)}</p>
+                  <p>{formatCurrency(order.totalAmount)}</p>
                   <p>{new Date(order.createdAt).toLocaleString()}</p>
                   <div className="admin-row-actions">
                     <button className="ghost-button" type="button" onClick={() => openAction("status", order)}>

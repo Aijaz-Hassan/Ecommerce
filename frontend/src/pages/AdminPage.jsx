@@ -2,11 +2,7 @@ import { AlertTriangle, Boxes, CircleDollarSign, Package, ShoppingBag, TrendingD
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/client";
 import AdminWorkspace from "../components/AdminWorkspace";
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD"
-});
+import { formatCurrency } from "../utils/currency";
 
 const monthLabel = (value) => {
   if (!value) {
@@ -142,7 +138,7 @@ export default function AdminPage() {
         <article className="admin-metric-card">
           <span className="admin-metric-icon"><CircleDollarSign size={20} /></span>
           <p>Total Revenue</p>
-          <strong>{currency.format(stats.revenue)}</strong>
+          <strong>{formatCurrency(stats.revenue)}</strong>
           <small className="trend-up"><TrendingUp size={14} /> Gross sales</small>
         </article>
         <article className="admin-metric-card">
@@ -175,7 +171,7 @@ export default function AdminPage() {
                 <div className="admin-bar-column" key={entry.label}>
                   <span style={{ height: `${Math.max(12, (entry.revenue / analytics.maxRevenue) * 100)}%` }} />
                   <strong>{entry.label}</strong>
-                  <small>{currency.format(entry.revenue)}</small>
+                  <small>{formatCurrency(entry.revenue)}</small>
                 </div>
               ))
             )}

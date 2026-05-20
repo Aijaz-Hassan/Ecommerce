@@ -1,5 +1,6 @@
 package com.ecommerce.store;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -9,12 +10,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.hamcrest.Matchers.hasItem;
 
+import com.ecommerce.store.entity.User;
+import com.ecommerce.store.service.PasswordResetEmailSender;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -28,6 +35,42 @@ class AuthAndProductApiTests {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private CapturingPasswordResetEmailSender emailService;
+
+    @BeforeEach
+    void resetEmailServiceMock() {
+        emailService.reset();
+    }
+
+    @TestConfiguration
+    static class PasswordResetEmailTestConfig {
+        @Bean
+        @Primary
+        CapturingPasswordResetEmailSender capturingPasswordResetEmailSender() {
+            return new CapturingPasswordResetEmailSender();
+        }
+    }
+
+    static class CapturingPasswordResetEmailSender implements PasswordResetEmailSender {
+        private User user;
+        private String resetUrl;
+        private int expirationMinutes;
+
+        @Override
+        public void sendPasswordResetEmail(User user, String resetUrl, int expirationMinutes) {
+            this.user = user;
+            this.resetUrl = resetUrl;
+            this.expirationMinutes = expirationMinutes;
+        }
+
+        void reset() {
+            user = null;
+            resetUrl = null;
+            expirationMinutes = 0;
+        }
+    }
 
     @Test
     void registerApiCreatesUserAndReturnsToken() throws Exception {
@@ -69,6 +112,76 @@ class AuthAndProductApiTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.token").isNotEmpty())
             .andExpect(jsonPath("$.email").value("login.user@example.com"));
+    }
+
+    @Test
+    void forgotPasswordSendsResetLinkToRegisteredEmailAndAllowsPasswordReset() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "fullName": "Reset User",
+                      "email": "reset.user@example.com",
+                      "password": "Demo1234"
+                    }
+                    """))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "email": "reset.user@example.com"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("A password reset link has been sent to your email."));
+
+        assertThat(emailService.user.getEmail()).isEqualTo("reset.user@example.com");
+        assertThat(emailService.expirationMinutes).isEqualTo(15);
+
+        String resetToken = tokenFromResetUrl(emailService.resetUrl);
+        mockMvc.perform(get("/api/auth/reset-password/validate")
+                .param("token", resetToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.valid").value(true));
+
+        mockMvc.perform(post("/api/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "token": "%s",
+                      "newPassword": "NewDemo123!",
+                      "confirmPassword": "NewDemo123!"
+                    }
+                    """.formatted(resetToken)))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "email": "reset.user@example.com",
+                      "password": "NewDemo123!"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.token").isNotEmpty());
+    }
+
+    @Test
+    void forgotPasswordRejectsUnregisteredEmailWithoutSendingMail() throws Exception {
+        mockMvc.perform(post("/api/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "email": "missing.user@example.com"
+                    }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Unable to send reset email. Please try again later."));
+
+        assertThat(emailService.resetUrl).isNull();
     }
 
     @Test
@@ -551,5 +664,12 @@ class AuthAndProductApiTests {
                 .with(user("order.entity.user@example.com").roles("CUSTOMER")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isEmpty());
+    }
+
+    private String tokenFromResetUrl(String resetUrl) {
+        String marker = "token=";
+        int tokenStart = resetUrl.indexOf(marker);
+        assertThat(tokenStart).isGreaterThanOrEqualTo(0);
+        return resetUrl.substring(tokenStart + marker.length());
     }
 }

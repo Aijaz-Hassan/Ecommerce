@@ -141,11 +141,13 @@ export function AuthProvider({ children }) {
   };
 
   const requestPasswordReset = async (values) => {
-    await api.post("/auth/forgot-password", values);
+    const response = await api.post("/auth/forgot-password", values);
+    return response.data;
   };
 
   const resendPasswordReset = async (values) => {
-    await api.post("/auth/forgot-password/resend", values);
+    const response = await api.post("/auth/forgot-password/resend", values);
+    return response.data;
   };
 
   const validateResetToken = async (token) => {

@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/client";
+import { formatCurrency } from "../utils/currency";
 
 const trackingSteps = ["CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED"];
 
@@ -131,7 +132,7 @@ export default function OrderDetailsPage() {
                 </div>
                 <div className="order-item-meta">
                   <strong>Qty {item.quantity}</strong>
-                  <span>${Number(item.lineTotal).toFixed(2)}</span>
+                  <span>{formatCurrency(item.lineTotal)}</span>
                 </div>
               </article>
             ))}
@@ -143,19 +144,19 @@ export default function OrderDetailsPage() {
             <h2>Bill details</h2>
             <div className="summary-line">
               <span>Subtotal</span>
-              <strong>${Number(order.subtotal).toFixed(2)}</strong>
+              <strong>{formatCurrency(order.subtotal)}</strong>
             </div>
             <div className="summary-line">
               <span>Tax</span>
-              <strong>${Number(order.taxAmount).toFixed(2)}</strong>
+              <strong>{formatCurrency(order.taxAmount)}</strong>
             </div>
             <div className="summary-line">
               <span>Shipping</span>
-              <strong>${Number(order.shippingAmount).toFixed(2)}</strong>
+              <strong>{formatCurrency(order.shippingAmount)}</strong>
             </div>
             <div className="summary-line">
               <span>Total</span>
-              <strong>${Number(order.totalAmount).toFixed(2)}</strong>
+              <strong>{formatCurrency(order.totalAmount)}</strong>
             </div>
             <div className="summary-line">
               <span>Payment</span>
